@@ -1,17 +1,18 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>sample-api</artifactId>
-    <groupId>axway.api-management.api</groupId>
+    <groupId>axway.api.management.demo</groupId>
     <version>1.0.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <name>A sample demo API</name>
+    <packaging>jar</packaging>
+    <name>A sample demo API project</name>
     <description>A demo API to explain CI/CD integration</description>
 
     <properties>
-        <apiConfigFile>./api-config.json</apiConfigFile>
-        <stage>dev</stage>
+        <apiConfigFile>src/main/resources/api-config.json</apiConfigFile>
+        <apim.cli.version>1.10.1</apim.cli.version>
     </properties>
 
     <distributionManagement>
@@ -29,15 +30,42 @@
         <dependency>
             <groupId>com.github.axway-api-management-plus.apim-cli</groupId>
             <artifactId>apimcli-apis</artifactId>
-            <version>1.10.0-SNAPSHOT</version>
+            <version>${apim.cli.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.github.axway-api-management-plus.apim-cli</groupId>
+            <artifactId>apimcli-apps</artifactId>
+            <version>${apim.cli.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.axway-api-management-plus.apim-cli</groupId>
+            <artifactId>apimcli-organizations</artifactId>
+            <version>${apim.cli.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.axway-api-management-plus.apim-cli</groupId>
+            <artifactId>apimcli-users</artifactId>
+            <version>${apim.cli.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.axway-api-management-plus.apim-cli</groupId>
+            <artifactId>apimcli-tool</artifactId>
+            <version>${apim.cli.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>
         <plugins>
+            <!-- CREATE .ZIP FILE -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>distribution</id>
@@ -46,35 +74,42 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>a2a-api-${project.version}</finalName>
+                            <finalName>${project.artifactId}-${project.version}</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>
-                                <descriptor>assembly/assembly.xml</descriptor>
+                                <descriptor>src/main/assembly/assembly.xml</descriptor>
                             </descriptors>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+
+
+            <!-- EXECUTE APIImportApp WITH ARGUMENTS-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>1.6.0</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
-                        <id>distribution</id>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
+                        <id>import-api</id>
+                        <configuration>
+                            <mainClass>com.axway.apim.APIImportApp</mainClass>
+                            <commandlineArgs>
+                                -c ${apiConfigFile} -f true
+                            </commandlineArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>list-api</id>
+                        <configuration>
+                            <mainClass>com.axway.apim.cli.APIManagerCLI</mainClass>
+                            <commandlineArgs>
+                                api get
+                            </commandlineArgs>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <addResourcesToClasspath>true</addResourcesToClasspath>
-                    <mainClass>com.axway.apim.APIImportApp</mainClass>
-                    <classpath/>
-                    <commandlineArgs>
-                        -c ${apiConfigFile} -s ${stage} -f true
-                    </commandlineArgs>
-                </configuration>
             </plugin>
         </plugins>
     </build>
